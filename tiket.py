@@ -1,4 +1,5 @@
 """PROGRAM PEMESANAN TIKET PESAWAT"""
+import random
 
 # data maskapai, rute, kelas, harga, dan stok tiket
 data_maskapai = {
@@ -158,20 +159,22 @@ def pesan_tiket():
     rute_yang_dicari = f"{asal}-{tujuan}"
 
     maskapai_tersedia = []
+    # perulangan untuk mengambil data maskapai
     for maskapai, info_maskapai in data_maskapai.items():
+        # kondisi jika rute yang dicari tersedia di dalam data maskapai
         if rute_yang_dicari in info_maskapai["data"]:
             maskapai_tersedia.append(maskapai)
+
+        if not maskapai_tersedia:
+            print("❌ Tidak ada maskapai yang melayani rute tersebut.")
+            return              # <-- kembali ke main_program() secara otomatis
 
     print(garis)
     print("\tMaskapai yang Melayani Rute Ini:")
     print(garis)
 
-    if not maskapai_tersedia:
-        print("❌ Tidak ada maskapai yang melayani rute tersebut.")
-        return
-
-    for i, m in enumerate(maskapai_tersedia, 1):
-        print(f"{i}. {m}")
+    for i, maskapai in enumerate(maskapai_tersedia, 1):
+        print(f"{i}. {maskapai}")
     print(garis)
 
 
@@ -243,7 +246,7 @@ def pesan_tiket():
 
     # UPDATE STOK DAN SIMPAN PESANAN
     kelas_dict[pilihan_kelas]["stok"] -= jumlah_tiket
-
+    status = "blm dibayar"
     pesanan.append({
         "maskapai": maskapai_dipilih,
         "rute": rute_yang_dicari,
@@ -251,7 +254,8 @@ def pesan_tiket():
         "harga": harga,
         "jumlah_tiket": jumlah_tiket,
         "data_penumpang": data_penumpang,
-        "total": total_harga
+        "total": total_harga,
+        "status": status
     })
 
     print("✅ Pemesanan berhasil!")
@@ -277,6 +281,7 @@ def lihat_pesanan():
         print(f"Harga Per Tiket: Rp {p['harga']}")
         print(f"Jumlah Tiket   : {p['jumlah_tiket']}")
         print(f"Total Harga    : Rp {p['total']}")
+        print(f"Status         : {p['status']}")
         print("-" * 40)
         print("Data Penumpang:")
 
@@ -289,9 +294,70 @@ def lihat_pesanan():
             print()
 
         print(garis)
+    
+    if p['status'] == "blm dibayar":  
+        bayar = input("Bayar Sekarang? (Y/N): ").upper()
+        if bayar == "Y":
+            nomor = int(input("Masukkan nomor pesanan yang ingin dibayar: "))
+            pesanan_yang_dipilih = pesanan[nomor - 1]   # <-- ini DICTIONARY
+            pembayaran(pesanan_yang_dipilih)            # <-- OK
+        else:
+            return
+    else:
+        kembali = input('Enter kembali ke halaman menu...')
+        return
 
-    input("Tekan Enter untuk kembali ke menu...")  # jeda agar tidak langsung kembali
-    return
+def pembayaran(pesanan):
+    total = pesanan["total"]
+
+    print(garis)
+    print("\tMetode Pembayaran")
+    print(garis)
+    print("1. Transfer Bank")
+    print("2. E-Wallet")
+    print("3. Virtual Account")
+    print("4. QRIS")
+    print(garis)
+
+    pilih = str(input("Ketik metode pembayaran : "))
+
+    # generate kode pembayaran
+    kode = "PAY-" + str(random.randint(100000, 999999))
+
+    print(garis)
+    print("Total yang harus dibayar : Rp", total)
+    print("Kode Pembayaran          :", kode)
+    print(garis)
+
+    while True:
+        bayar = int(input("Masukkan nominal pembayaran: "))
+
+        if bayar == total:
+            print("Pembayaran berhasil!")
+            pesanan["status"] = "Lunas"   # update status
+            pesanan["metode"] = pilih
+            break
+        else:
+            print("Nominal salah!")
+            ulang = input("Coba lagi? (Y/N): ").upper()
+            if ulang == "N":
+                print("Pembayaran dibatalkan.")
+                return
+
+    # Tampilkan struk
+    print(garis)
+    print("\tSTRUK PEMBAYARAN")
+    print(garis)
+    print(f"Maskapai : {pesanan['maskapai']}")
+    print(f"Rute     : {pesanan['rute']}")
+    print(f"Kelas    : {pesanan['kelas']}")
+    print(f"Tiket    : {pesanan['jumlah_tiket']}")
+    print(f"Total    : Rp {pesanan['total']}")
+    print(f"Pembayaran via: ", pilih)
+    print(f"Status   : LUNAS")
+    print(garis)
+    print("Pembayaran selesai!\n")
+    input("Tekan ENTER untuk kembali...")
 
 # function untuk menampilkan stock tiket maskapai
 def stock_tiket():
